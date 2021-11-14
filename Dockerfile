@@ -3,7 +3,6 @@
 # VERSION of Bitcoin Core to be build
 #   NOTE: Unlike our other images this one is NOT prefixed with `v`,
 #           as many things (like download URLs) use this form instead.
-ARG SMALLVER=22.0
 ARG VERSION=v22.0.knots20211108
 
 # CPU architecture to build binaries for
@@ -49,16 +48,16 @@ ADD https://github.com/bitcoinknots/bitcoin/archive/refs/tags/$VERSION.tar.gz
 #
 FROM preparer-base AS preparer-git
 
-ARG SMALLVER
+ARG VERSION
 
 RUN apk add --no-cache git
 
 # Fetch the source code at a specific TAG
-RUN git clone  -b "v$SMALLVER"  --depth=1  https://github.com/bitcoinknots/bitcoin.git  "/bitcoin-$SMALLVER/"
+RUN git clone  -b "$VERSION"  --depth=1  https://github.com/bitcoinknots/bitcoin.git  "/bitcoin-$VERSION/"
 
 # Verify tag, and copy source code to predetermined location on success
-RUN cd "/bitcoin-$SMALLVER/" && \
-    git verify-tag "v$SMALLVER"
+RUN cd "/bitcoin-$VERSION/" && \
+    git verify-tag "v$VERSION"
 
 
 
