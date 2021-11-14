@@ -1,0 +1,74 @@
+name: Docker build on tag
+env:
+        DOCKER_CLI_EXPERIMENTAL: enabled
+        ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+        TAG_FMT: '^refs/tags/((v(.?[0-9]+){3,4})-?([^+]+)$'
+
+on:
+        push:
+                tags: [ '*' ]
+
+jobs:
+        build:
+                name: Build bitcoin knots
+                steps:
+                        - name: Setup Environment
+                          run: echo "TAG=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
+
+                        - name: Show set environment variables
+                          run: |
+                                  printf "    TAG: %s\n"  "$TAG"
+
+                        - name: Login to Docker Hub
+                          run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+                        - name: Checkout project
+                          uses: actions/checkout@v2
+
+                        - name: Setup Docker buildx action
+                          uses: crazy-max/ghaction-docker-buildx@v1
+                          id: buildx
+                          with:
+                                  buildx-version: latest
+                                  qemu-version: latest
+
+                        - name: Show available Docker buildx platforms
+                          run: echo ${{ steps.buildx.outputs.platforms }}
+
+
+                        - name: Run Docker buildx against the tag
+                          run: |
+                                  docker buildx build \
+                                  --platform linux/amd64,linux/arm64 \
+                                  --build-arg VERSION=$TAG \
+                                  --tag ${{ secrets.DOCKER_HUB_USER }}/bitcoin-knots:$TAG \
+                                  --output "type=registry" .
+
+                        - name: build against latest
+                          run: |
+                                  docker buildx build \
+                                  --platform linux/amd64,linux/arm64 \
+                                  --build-arg VERSION=$TAG \
+                                  --tag ${{ secrets.DOCKER_HUB_USER }}/bitcoin-knots:latest \
+                                  --output "type=registry" .
+
+                        - name: Push to GHCR.io too (ghcr.io/lncm/docker-bitcoinknots:TAG)
+                          run: |
+                                  if [[ ! -z ${{ secrets.MAINTAINER_TOKEN }} ]] && [[ ! -z ${{ secrets.MAINTAINER_USER }} ]]; then
+                                      echo "${{ secrets.MAINTAINER_TOKEN }}" | docker login https://ghcr.io -u "${{ secrets.MAINTAINER_USER }}" --password-stdin
+                                      echo "Pushing to ghcr.io/lncm/docker-clightning/$TAG ..."
+                                      docker buildx build \
+                                        --platform linux/amd64,linux/arm64 \
+                                        --tag ghcr.io/lncm/docker-bitcoinknots:$TAG \
+                                        --output "type=registry" .
+                                      echo "Pushing to ghcr.io/lncm/docker-clightning:latest ..."
+                                      docker buildx build \
+                                        --platform linux/amd64,linux/arm64 \
+                                        --tag ghcr.io/lncm/docker-bitcoinknots:latest \
+                                        --output "type=registry" .
+                                  else
+                                      echo "MAINTAINER_TOKEN and MAINTAINER_USER do no exist! Skipping!"
+                                  fi
+
+
+
