@@ -206,7 +206,7 @@ jobs:
           token: ${{ secrets.GH_PA_TOKEN }}
           name: ${{ env.VERSION }}
           body: |
-            This release packages `bitcoind` to be on par with https://github.com/bitcoin/bitcoin/releases/tag/${{ env.VERSION }}
+            This release packages `bitcoind` to be on par with https://github.com/bitcoinknots/bitcoin/releases/tag/${{ env.VERSION }}
           prerelease: true
           gzip: false
           files: >
