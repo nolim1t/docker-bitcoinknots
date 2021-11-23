@@ -24,6 +24,10 @@ Due to request from the [Citadel](github.com/runcitadel/) guys, and also for mor
 
 This is mostly the same, minus a few other differences. You may see the [original project](https://github.com/lncm/docker-bitcoind) which is mostly the same build regime.
 
+### Diferences
+
+I've removed the verification component, but ideally I'd like to be able to verify releases the same way as I do with bitcoin core. If anyone has a PGP key that I could verify for the sources in github please let me know. It's good to have a healthy paranoia when dealing with finances.
+
 ## Maintainer notes
 
 ### Environment variables
