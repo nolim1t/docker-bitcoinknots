@@ -60,11 +60,11 @@ ARG VERSION
 RUN apk add --no-cache git
 
 # Fetch the source code at a specific TAG
-RUN git clone  -b "v$VERSION"  --depth=1  https://github.com/bitcoinknots/bitcoin.git  "/v$VERSION/"
+RUN git clone  -b "v$VERSION"  --depth=1  https://github.com/bitcoinknots/bitcoin.git  "/bitcoin-$VERSION/"
 
 # Verify tag, and copy source code to predetermined location on success
-RUN cd "/v$VERSION/" && \
-    git verify-tag "v$VERSION"
+RUN cd "/bitcoin-$VERSION/" && \
+    git verify-tag "bitcoin-$VERSION"
 
 
 
@@ -124,12 +124,12 @@ RUN apk add --no-cache \
 COPY  --from=berkeleydb /opt/  /opt/
 
 # Change to the extracted directory
-WORKDIR /v$VERSION/
+WORKDIR /bitcoin-$VERSION/
 
 # Copy bitcoin source (downloaded & verified in previous stages)
-COPY  --from=preparer /v$VERSION/  ./
+COPY  --from=preparer /bitcoin-$VERSION/  ./
 
-ENV BITCOIN_PREFIX /opt/bitcoin-v$VERSION
+ENV BITCOIN_PREFIX /opt/bitcoin-$VERSION
 
 RUN ./autogen.sh
 
