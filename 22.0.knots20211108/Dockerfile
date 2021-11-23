@@ -40,8 +40,7 @@ FROM preparer-base AS preparer-release
 ARG VERSION
 
 # Add release
-ADD https://github.com/bitcoinknots/bitcoin/archive/refs/tags/v$VERSION.tar.gz
-
+ADD https://github.com/bitcoinknots/bitcoin/archive/refs/tags/v$VERSION.tar.gz ./
 #
 ## Option #2: Fetch bitcoind source from GitHub
 # don't use
