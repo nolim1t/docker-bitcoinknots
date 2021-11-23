@@ -2,6 +2,22 @@
 
 **notes:** This project is still under development
 
+[![Build Status]][builds]
+[![gh_last_release_svg]][gh_last_release_url]
+[![Docker Image Size]][bitcoinknots-docker-hub]
+[![Docker Pulls Count]][bitcoinknots-docker-hub]
+
+[builds]: https://github.com/nolim1t/docker-bitcoinknots/actions?query=workflow%3A%22Build+%26+deploy+on+git+tag+push%22
+[Build Status]: https://github.com/nolim1t/docker-bitcoinknots/workflows/Build%20&%20deploy%20on%20git%20tag%20push/badge.svg
+
+[gh_last_release_svg]: https://img.shields.io/github/v/release/nolim1t/docker-bitcoinknots?sort=semver
+[gh_last_release_url]: https://github.com/nolim1t/docker-bitcoinknots/releases/latest
+
+[Docker Image Size]: https://img.shields.io/microbadger/image-size/nolim1t/bitcoinknots.svg
+[Docker Pulls Count]: https://img.shields.io/docker/pulls/nolim1t/bitcoinknots.svg?style=flat
+[bitcoinknots-docker-hub]: https://hub.docker.com/r/nolim1t/bitcoinknots
+
+
 ## About
 
 Due to request from the [Citadel](github.com/runcitadel/) guys, and also for more client diversity. I've decided to create a docker container for the [Bitcoin Knots implementation](https://github.com/bitcoinknots/bitcoin) for bitcoin.
