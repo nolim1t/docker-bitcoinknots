@@ -17,7 +17,6 @@ jobs:
       - name: Sync README.md and Description to Docker Hub using meeDamian action (my fork)
         uses: nolim1t/sync-readme@v1.0.6
         with:
-          user: ${{ secrets.DOCKER_USERNAME }}
-          pass: ${{ secrets.DOCKER_PASSWORD }}
-          slug: lncm/clightning
+          user: ${{ secrets.DOCKER_USER }}
+          pass: ${{ secrets.DOCKER_TOKEN }}
           description: true
