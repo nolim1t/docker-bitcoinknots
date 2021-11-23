@@ -57,7 +57,7 @@ RUN git clone  -b "$VERSION"  --depth=1  https://github.com/bitcoinknots/bitcoin
 
 # Verify tag, and copy source code to predetermined location on success
 RUN cd "/bitcoin-$VERSION/" && \
-    git verify-tag "v$VERSION"
+    git verify-tag "$VERSION"
 
 
 
