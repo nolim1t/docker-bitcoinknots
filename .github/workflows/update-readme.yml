@@ -14,9 +14,17 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2.0.0
-      - name: Sync README.md and Description to Docker Hub using meeDamian action (my fork)
+      - name: Sync README.md and Description to Docker Hub on nolim1t account
         uses: nolim1t/sync-readme@v1.0.6
         with:
           user: ${{ secrets.DOCKER_USER }}
           pass: ${{ secrets.DOCKER_TOKEN }}
+          slug: nolim1t/bitcoinknots
+          description: true
+      - name: Sync README.md and Description to Docker Hub on lncm account
+        uses: nolim1t/sync-readme@v1.0.6
+        with:
+          user: ${{ secrets.DOCKER_USER }}
+          pass: ${{ secrets.DOCKER_TOKEN }}
+          slug: lncm/bitcoinknots
           description: true
