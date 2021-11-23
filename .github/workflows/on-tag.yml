@@ -1,74 +1,212 @@
-name: Docker build on tag
+name: Build & deploy on git tag push
+
 env:
-        DOCKER_CLI_EXPERIMENTAL: enabled
-        ACTIONS_ALLOW_UNSECURE_COMMANDS: true
-        TAG_FMT: '^refs/tags/((v(.?[0-9]+){3,4})-?([^+]+)$'
+  APP: bitcoinknots
+  ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+
+  # Capture groups within $TAG_FMT:
+  #   \1 => TAG       vX.Y.Z[.P]+build<N>
+  #   \2 => VERSION   vX.Y.Z[.P]
+  #   \3 => ignore    (captures dot, and last number-group in version)
+  #   \4 => BUILD     N
+  TAG_FMT: '^refs/tags/((v(.?[0-9]+){3,4})\+build([0-9]+))$'
+
 
 on:
-        push:
-                tags: [ '*' ]
+  push:
+    tags: [ '*' ]
 
 jobs:
-        build:
-                name: Build bitcoin knots
-                steps:
-                        - name: Setup Environment
-                          run: echo "TAG=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
+  build:
+    name: Build bitcoind
+    runs-on: ubuntu-18.04
 
-                        - name: Show set environment variables
-                          run: |
-                                  printf "    TAG: %s\n"  "$TAG"
+    strategy:
+      matrix:
+        arch:
+          - amd64
+          - arm32v7
+          - arm64v8
 
-                        - name: Login to Docker Hub
-                          run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+    env:
+      QEMU_VERSION: v5.0.0
+      DOCKER_BUILDKIT: 1
 
-                        - name: Checkout project
-                          uses: actions/checkout@v2
+    steps:
+      - uses: actions/checkout@v2
 
-                        - name: Setup Docker buildx action
-                          uses: crazy-max/ghaction-docker-buildx@v1
-                          id: buildx
-                          with:
-                                  buildx-version: latest
-                                  qemu-version: latest
+      - name: Setup environment
+        run: |
+          if ! echo "$GITHUB_REF" | grep -qE "$TAG_FMT"; then
+            echo "ERR: TAG must be in format: vX.Y.Z[.P]+build<N>"
+            exit 1
+          fi
 
-                        - name: Show available Docker buildx platforms
-                          run: echo ${{ steps.buildx.outputs.platforms }}
+          VERSION="$(echo "$GITHUB_REF" | sed -E "s|$TAG_FMT|\2|")"
+          DIR="$(echo "${VERSION#v}" | cut -d. -f-2)"
+
+          if ! grep -q "^ARG VERSION=${VERSION#v}$" "$DIR/Dockerfile"; then
+            echo "ERR: $DIR/Dockerfile must contain VERSION=$VERSION"
+            exit 1
+          fi
+
+          echo ::set-env name=DIR::"$DIR"
+
+          echo ::set-env name=TAG::"$(echo "$GITHUB_REF" | sed -E "s|$TAG_FMT|\1|")"
+          echo ::set-env name=BUILD::"$(echo "$GITHUB_REF" | sed -E "s|$TAG_FMT|\4|")"
+
+      - name: Print ENV VARs set above
+        run: |
+          printf "    APP: %s\n"  "$APP"
+          printf "   ARCH: %s\n"  "${{ matrix.arch }}"
+          printf "    TAG: %s\n"  "$TAG"
+          printf "    DIR: %s\n"  "$DIR"
+          printf "  BUILD: %s\n"  "$BUILD"
+
+      - name: Register self-compiled qemu
+        if: matrix.arch != 'amd64'
+        run: docker run --rm --privileged "meedamian/simple-qemu:$QEMU_VERSION-${{ matrix.arch }}" -p yes
+
+      - name: Build ${{ env.APP }}
+        run: >
+          docker build --no-cache "$DIR/"
+          --build-arg "ARCH=${{ matrix.arch }}"
+          --label     "arch=${{ matrix.arch }}"
+          --label     "commit=${{ github.sha }}"
+          --label     "git-tag=$TAG"
+          --label     "guilty=${{ github.actor }}"
+          --label     "repo-url=${{ github.repositoryUrl }}"
+          --tag       "$APP"
+
+      - name: Show built image details
+        run: docker images "$APP"
+
+      - name: Run sanity checks
+        env:
+          DIR: /usr/local/bin
+          MINOR: ${{ env.DIR }}
+        run: |
+          run() {
+            ENTRYPOINT="${1:-$APP}"; shift
+            ARGS=${*:-"--version"}
+
+            printf "\n$ %s %s\n"  "$ENTRYPOINT"  "$ARGS"
+            docker run --rm  --entrypoint "$ENTRYPOINT"  "$APP"  $ARGS
+          }
+
+          docker inspect "$APP" | jq '.'
+          printf "\n"
+
+          run bitcoind | head -n 1
+          run bitcoin-cli
+          run bitcoin-tx --help | head -n 1
+
+          # If version higher, or equal than v0.18.0, also run `bitcoin-wallet` binary
+          if [ "${MINOR#0.}" -ge "18" ]; then
+            run bitcoin-wallet --help | head -n 1
+          fi
+
+          run uname -a
+          run cat /etc/os-release
+          run sha256sum "$DIR/bitcoind" "$DIR/bitcoin-cli"
+
+      - name: Save built image into a .tgz file
+        run: |
+          mkdir -p images/
+
+          docker tag  "$APP"  "$APP:${{ matrix.arch }}"
+          docker save "$APP:${{ matrix.arch }}" | gzip > "images/docker-$APP-$TAG-${{ matrix.arch }}.tgz"
+
+      - name: Print sha256sum of built image
+        run: sha256sum images/*
+
+      - name: Upload docker image as build artifact
+        uses: actions/upload-artifact@v1.0.0
+        with:
+          name: docker-images
+          path: images/
 
 
-                        - name: Run Docker buildx against the tag
-                          run: |
-                                  docker buildx build \
-                                  --platform linux/amd64,linux/arm64 \
-                                  --build-arg VERSION=$TAG \
-                                  --tag ${{ secrets.DOCKER_HUB_USER }}/bitcoin-knots:$TAG \
-                                  --output "type=registry" .
+  deploy:
+    name: Deploy to Docker Hub & Github Releases.  Only after successful build.
 
-                        - name: build against latest
-                          run: |
-                                  docker buildx build \
-                                  --platform linux/amd64,linux/arm64 \
-                                  --build-arg VERSION=$TAG \
-                                  --tag ${{ secrets.DOCKER_HUB_USER }}/bitcoin-knots:latest \
-                                  --output "type=registry" .
+    runs-on: ubuntu-18.04
+    needs: build
 
-                        - name: Push to GHCR.io too (ghcr.io/lncm/docker-bitcoinknots:TAG)
-                          run: |
-                                  if [[ ! -z ${{ secrets.MAINTAINER_TOKEN }} ]] && [[ ! -z ${{ secrets.MAINTAINER_USER }} ]]; then
-                                      echo "${{ secrets.MAINTAINER_TOKEN }}" | docker login https://ghcr.io -u "${{ secrets.MAINTAINER_USER }}" --password-stdin
-                                      echo "Pushing to ghcr.io/lncm/docker-clightning/$TAG ..."
-                                      docker buildx build \
-                                        --platform linux/amd64,linux/arm64 \
-                                        --tag ghcr.io/lncm/docker-bitcoinknots:$TAG \
-                                        --output "type=registry" .
-                                      echo "Pushing to ghcr.io/lncm/docker-clightning:latest ..."
-                                      docker buildx build \
-                                        --platform linux/amd64,linux/arm64 \
-                                        --tag ghcr.io/lncm/docker-bitcoinknots:latest \
-                                        --output "type=registry" .
-                                  else
-                                      echo "MAINTAINER_TOKEN and MAINTAINER_USER do no exist! Skipping!"
-                                  fi
+    env:
+      DOCKER_CLI_EXPERIMENTAL: enabled
 
+    steps:
+      - name: Setup environment
+        run: |
+          echo ::set-env name=SLUG::"$(echo ${GITHUB_REPOSITORY,,} | sed 's/docker-//')"
+          echo ::set-env name=VERSION::"$(echo "$GITHUB_REF" | sed -E "s|$TAG_FMT|\2|")"
+          echo ::set-env name=BUILD::"$(echo "$GITHUB_REF" | sed -E "s|$TAG_FMT|\4|")"
 
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v1.0.0
+        with:
+          name: docker-images
 
+      - name: Print sha256sum of downloaded images
+        run: sha256sum docker-images/*
+
+      - name: Load images locally
+        run: find docker-images  -exec docker load -i "{}" \;
+
+      # No short tags.
+      - name: Version-tag all images
+        run: |
+          for arch in $(docker images "$APP" --format "{{.Tag}}"); do
+            docker tag  "$APP:$arch"  "$SLUG:$VERSION-$arch-build$BUILD"
+            docker tag  "$APP:$arch"  "$SLUG:$VERSION-$arch"
+          done
+
+      - name: List all tagged images
+        run: docker images "$SLUG"
+
+      - name: Login to Docker Hub
+        env:
+          DOCKER_USER: meedamian
+        run: |
+          echo "Logging in as ${DOCKER_USER}…"
+          echo "${{ secrets.DOCKER_TOKEN }}" | docker login -u="$DOCKER_USER" --password-stdin
+
+      - name: Push all images
+        run: docker images "$SLUG" --format "{{.Repository}}:{{.Tag}}" | xargs -I %  docker push %
+
+      - name: Create manifest
+        run: >
+          docker -D manifest create  "$SLUG:$VERSION" \
+            "$SLUG:$VERSION-amd64" \
+            "$SLUG:$VERSION-arm32v7" \
+            "$SLUG:$VERSION-arm64v8"
+
+      - name: Annotate images for manifest
+        run: |
+          docker manifest annotate "$SLUG:$VERSION" "$SLUG:$VERSION-arm32v7" --os linux --arch arm   --variant v7
+          docker manifest annotate "$SLUG:$VERSION" "$SLUG:$VERSION-arm64v8" --os linux --arch arm64 --variant v8
+
+      - name: Print manifest details
+        run: docker manifest inspect "$SLUG:$VERSION" | jq '.'
+
+      - name: Push manifest
+        run: docker manifest push "$SLUG:$VERSION"
+
+      - name: Create & print SHA256SUMS file
+        run: |
+          (cd docker-images;  sha256sum *) >> ./SHA256SUMS
+          cat ./SHA256SUMS
+
+      - name: Upload images to Github Release
+        uses: meeDamian/github-release@2.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN_NOEXPIRE }}
+          name: ${{ env.VERSION }}
+          body: |
+            This release packages `bitcoind` to be on par with https://github.com/bitcoin/bitcoin/releases/tag/${{ env.VERSION }}
+          prerelease: true
+          gzip: false
+          files: >
+            docker-images/*
+            SHA256SUMS
