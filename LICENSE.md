@@ -1,4 +1,4 @@
-MIT License
+# MIT License
 
 Copyright (c) 2021 [@nolim1t](https://nolim1t.co/) / LNCM Contributors
 
