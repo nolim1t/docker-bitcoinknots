@@ -41,6 +41,10 @@ ARG VERSION
 
 # Add release
 ADD https://github.com/bitcoinknots/bitcoin/archive/refs/tags/v$VERSION.tar.gz ./
+
+# Debug
+RUN ls -la ./
+
 #
 ## Option #2: Fetch bitcoind source from GitHub
 # don't use
@@ -52,7 +56,7 @@ ARG VERSION
 RUN apk add --no-cache git
 
 # Fetch the source code at a specific TAG
-RUN git clone  -b "v$VERSION"  --depth=1  https://github.com/bitcoinknots/bitcoin.git  "/bitcoin-$VERSION/"
+RUN git clone  -b "v$VERSION"  --depth=1  https://github.com/bitcoinknots/bitcoin.git  "/bitcoin-v$VERSION/"
 
 # Verify tag, and copy source code to predetermined location on success
 RUN cd "/bitcoin-$VERSION/" && \
@@ -116,12 +120,12 @@ RUN apk add --no-cache \
 COPY  --from=berkeleydb /opt/  /opt/
 
 # Change to the extracted directory
-WORKDIR /bitcoin-$VERSION/
+WORKDIR /bitcoin-v$VERSION/
 
 # Copy bitcoin source (downloaded & verified in previous stages)
-COPY  --from=preparer /bitcoin-$VERSION/  ./
+COPY  --from=preparer /bitcoin-v$VERSION/  ./
 
-ENV BITCOIN_PREFIX /opt/bitcoin-$VERSION
+ENV BITCOIN_PREFIX /opt/bitcoin-v$VERSION
 
 RUN ./autogen.sh
 
