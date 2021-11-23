@@ -17,8 +17,8 @@ if [[ -z "$VERSION" ]]; then
 fi
 
 # Get directory
-#DIR="$(echo "${VERSION#v}" | cut -d. -f-2)"
-DIR="$(echo "${VERSION#v}")"
+DIR="$(echo "${VERSION#v}" | cut -d. -f-2)"
+#DIR="$(echo "${VERSION#v}")"
 
 # Verify there's no uncommitted changes in the working dir
 if [[ -n "$(git status --untracked-files=no --porcelain)" ]]; then
