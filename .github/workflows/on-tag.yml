@@ -9,7 +9,7 @@ env:
   #   \2 => VERSION   vX.Y.Z[.P]
   #   \3 => ignore    (captures dot, and last number-group in version)
   #   \4 => BUILD     N
-  TAG_FMT: '^refs/tags/((v(.?[0-9]+){3,4})\+build([0-9]+))$'
+  TAG_FMT: '^refs/tags/((v(.?[A-Za-z0-9]+){3,4})\+build([0-9]+))$'
 
 
 on:
@@ -38,6 +38,7 @@ jobs:
       - name: Setup environment
         run: |
           if ! echo "$GITHUB_REF" | grep -qE "$TAG_FMT"; then
+            echo $GITHUB_REF
             echo "ERR: TAG must be in format: vX.Y.Z[.P]+build<N>"
             exit 1
           fi
