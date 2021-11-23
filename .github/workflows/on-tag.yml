@@ -167,10 +167,10 @@ jobs:
 
       - name: Login to Docker Hub
         env:
-          DOCKER_USER: meedamian
+          DOCKER_USER: ${{ secrets.DOCKER_USER }}
         run: |
-          echo "Logging in as ${DOCKER_USER}…"
-          echo "${{ secrets.DOCKER_TOKEN }}" | docker login -u="$DOCKER_USER" --password-stdin
+          echo "Logging in as ${{ secrets.DOCKER_USER }}…"
+          echo "${{ secrets.DOCKER_TOKEN }}" | docker login -u="${{ secrets.DOCKER_USER }}" --password-stdin
 
       - name: Push all images
         run: docker images "$SLUG" --format "{{.Repository}}:{{.Tag}}" | xargs -I %  docker push %
