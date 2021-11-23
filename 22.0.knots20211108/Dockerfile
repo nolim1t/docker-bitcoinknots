@@ -42,6 +42,10 @@ ARG VERSION
 # Add release
 ADD https://github.com/bitcoinknots/bitcoin/archive/refs/tags/v$VERSION.tar.gz ./
 
+# Extract
+RUN tar -xzf "v$VERSION.tar.gz" && \
+    rm  -f   "v$VERSION.tar.gz"
+
 # Debug
 RUN ls -la ./
 
@@ -56,10 +60,10 @@ ARG VERSION
 RUN apk add --no-cache git
 
 # Fetch the source code at a specific TAG
-RUN git clone  -b "v$VERSION"  --depth=1  https://github.com/bitcoinknots/bitcoin.git  "/bitcoin-v$VERSION/"
+RUN git clone  -b "v$VERSION"  --depth=1  https://github.com/bitcoinknots/bitcoin.git  "/v$VERSION/"
 
 # Verify tag, and copy source code to predetermined location on success
-RUN cd "/bitcoin-$VERSION/" && \
+RUN cd "/v$VERSION/" && \
     git verify-tag "v$VERSION"
 
 
@@ -120,10 +124,10 @@ RUN apk add --no-cache \
 COPY  --from=berkeleydb /opt/  /opt/
 
 # Change to the extracted directory
-WORKDIR /bitcoin-v$VERSION/
+WORKDIR /v$VERSION/
 
 # Copy bitcoin source (downloaded & verified in previous stages)
-COPY  --from=preparer /bitcoin-v$VERSION/  ./
+COPY  --from=preparer /v$VERSION/  ./
 
 ENV BITCOIN_PREFIX /opt/bitcoin-v$VERSION
 
@@ -170,7 +174,7 @@ ARG VERSION
 ARG USER
 ARG DIR
 
-LABEL maintainer="Damian Mee (@meeDamian)"
+LABEL authors="@meeDamian,@nolim1t"
 
 # Use APK repos over HTTPS. See: https://github.com/gliderlabs/docker-alpine/issues/184
 RUN sed -i 's|http://dl-cdn.alpinelinux.org|https://alpine.global.ssl.fastly.net|g' /etc/apk/repositories
