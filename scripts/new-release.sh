@@ -12,7 +12,7 @@ VERSION=$1
 # Verify version to-be-released is provided
 if [[ -z "$VERSION" ]]; then
   >&2 printf "\nERR: version missing:  version needs to be passed as the first argument.  Try:\n"
-  >&2 printf "\t./%s  %s\n\n"   "$(basename "$0")"  "v0.19.1"
+  >&2 printf "\t./%s  %s\n\n"   "$(basename "$0")"  "v22.0.knots20211108"
   exit 1
 fi
 
