@@ -201,7 +201,7 @@ jobs:
           cat ./SHA256SUMS
 
       - name: Upload images to Github Release
-        uses: meeDamian/github-release@2.0.3
+        uses: nolim1t/github-release@2.0
         with:
           token: ${{ secrets.GH_PA_TOKEN }}
           name: ${{ env.VERSION }}
