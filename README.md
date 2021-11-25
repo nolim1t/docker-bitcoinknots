@@ -4,7 +4,6 @@
 
 [![Build Status]][builds]
 [![gh_last_release_svg]][gh_last_release_url]
-[![Docker Image Size]][bitcoinknots-docker-hub]
 [![Docker Pulls Count]][bitcoinknots-docker-hub]
 
 [builds]: https://github.com/nolim1t/docker-bitcoinknots/actions?query=workflow%3A%22Build+%26+deploy+on+git+tag+push%22
@@ -13,7 +12,6 @@
 [gh_last_release_svg]: https://img.shields.io/github/v/release/nolim1t/docker-bitcoinknots?sort=semver
 [gh_last_release_url]: https://github.com/nolim1t/docker-bitcoinknots/releases/latest
 
-[Docker Image Size]: https://img.shields.io/microbadger/image-size/nolim1t/bitcoinknots.svg
 [Docker Pulls Count]: https://img.shields.io/docker/pulls/nolim1t/bitcoinknots.svg?style=flat
 [bitcoinknots-docker-hub]: https://hub.docker.com/r/nolim1t/bitcoinknots
 
