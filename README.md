@@ -32,6 +32,7 @@ I've removed the verification component, but ideally I'd like to be able to veri
 
 These are used for building and also creating releases in github
 
+- `DOCKER_HUB_USER` - docker hub user to push to. Permissions MUST be correct or it will fail.
 - `DOCKER_TOKEN` - docker password or token (for pushing to docker)
 - `DOCKER_USER` - docker username (for pushing to docker)
 - `GH_PA_TOKEN` - github personal token for creating releases (for pushing to a release)
