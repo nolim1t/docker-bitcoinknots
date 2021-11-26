@@ -24,7 +24,8 @@ This is mostly the same, minus a few other differences. You may see the [origina
 
 ### Todo list
 
-- [ ] Improve on workflow, add testing regime
+- [ ] Improve on workflow
+- [ ] add testing regime
 - [ ] Move over to LNCM org so that we have a more decentralized contributors.
 
 ### Diferences
