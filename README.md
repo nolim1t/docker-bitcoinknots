@@ -1,7 +1,5 @@
 # Bitcoin knots docker container
 
-**notes:** This project is still under development
-
 [![Build Status]][builds]
 [![gh_last_release_svg]][gh_last_release_url]
 [![Docker Pulls Count]][bitcoinknots-docker-hub]
