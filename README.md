@@ -24,7 +24,6 @@ This is mostly the same, minus a few other differences. You may see the [origina
 
 ### Todo list
 
-- [x] Add option to push to **any** docker hub user in environment variables
 - [ ] Improve on workflow
 - [ ] Move over to LNCM org so that we have a more decentralized contributors.
 
@@ -33,6 +32,15 @@ This is mostly the same, minus a few other differences. You may see the [origina
 I've removed the verification component, but ideally I'd like to be able to verify releases the same way as I do with bitcoin core. If anyone has a PGP key that I could verify for the sources in github please let me know. It's good to have a healthy paranoia when dealing with finances.
 
 ## Maintainer notes
+
+### Building
+
+1. Create a directory for the first major/minor version (eg. 22.0)
+2. Put a `Dockerfile` in that directory
+3. Commit that directory to the repo
+4. Run `./scripts/new-release.sh` with the **full** version as a parameter (this script pushes to origin by default, so make sure you have write access to it)
+5. Wait 2 hours (building bitcoind is resource intensive).
+6. Check for any errors, check docker hub.
 
 ### Environment variables
 
