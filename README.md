@@ -26,7 +26,7 @@ This is mostly the same, minus a few other differences. You may see the [origina
 
 - [x] Add option to push to **any** docker hub user in environment variables
 - [ ] Improve on workflow
-- [ ] Move over to LNCM org so that
+- [ ] Move over to LNCM org so that we have a more decentralized contributors.
 
 ### Diferences
 
